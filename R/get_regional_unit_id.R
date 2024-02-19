@@ -44,7 +44,28 @@
 # provide points as an input and get the regional units
 # where the points belong (without the full extent)
 
+
 get_regional_unit_id <- function(data, lon, lat, quiet = TRUE) {
+
+  # Allowing to load shapefiles
+  # TODO: Test on other geometry types. Tested: Points, single polygon.
+  # TODO: Arguments lon, lat not needed if we use a shapefile. Make optional?
+  # data = st_read('/home/southernfrance.shp')
+  if (is(data, "sf")) {
+
+    # Use points directly, otherwise use bounding box:
+    # TODO: What about multipoint?
+    if (all(st_is(data, "POINT"))) {
+      coord <- st_coordinates(data)
+      data <- data.frame(lon=coord[,1], lat=coord[,2])
+      colnames(data) <- c(lon, lat)
+    } else {
+      # TODO: What if bounding box leaves a hole in the middle? Do we have to add points in the middle?
+      bbox <- st_bbox(data)
+      data <- data.frame(lon=c(bbox$xmin, bbox$xmax), ylat=c(bbox$ymin, bbox$ymax))
+      colnames(data) <- c(lon, lat)
+    }
+  }
 
   # Check if input data is of type data.frame,
   # data.table or tibble
