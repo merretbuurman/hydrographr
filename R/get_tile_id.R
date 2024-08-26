@@ -38,9 +38,10 @@
 
 get_tile_id <- function(data, lon, lat, lookup_dir = tempdir()) {
 
+  # TODO may have to remove superfluous slash at the end of lookup_dir??
   reg_un <- get_regional_unit_id(data, lon, lat, lookup_dir)
 
-
+  # TODO may have to remove superfluous slash at the end of lookup_dir??
   lookup_file <- paste0(lookup_dir, "/lookup_tile_regunit.txt")
 
   if (!file.exists(lookup_file)) {

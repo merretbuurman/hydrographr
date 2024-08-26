@@ -78,6 +78,7 @@ get_regional_unit_id <- function(data, lon, lat, lookup_dir = tempdir(), quiet =
   options(timeout = max(300, getOption("timeout")))
 
   # global file of regional units ids
+  # TODO may have to remove superfluous slash at the end of lookup_dir??
   reg_unit_file <- paste0(lookup_dir, "/regional_unit_ovr.tif")
 
   # define download paths (two options):
