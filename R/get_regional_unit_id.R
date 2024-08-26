@@ -11,6 +11,10 @@
 #' the longitude / latitude coordinates in WGS84.
 #' @param lon character. The name of the column with the longitude coordinates.
 #' @param lat character. The name of the column with the latitude coordinates.
+#' @param lookup_dir character. Optional. The path to the temp dir to use for
+#' downloading and storing ancillary files. If not set, tempdir() is used.
+#' In some cases, windows users have issues with using tempdir(), so passing
+#' your own path can help in these cases.
 #' @param quiet logical. If FALSE, the standard output will be printed.
 #' Default is TRUE.
 #' @importFrom stringi stri_rand_strings
@@ -44,7 +48,7 @@
 # provide points as an input and get the regional units
 # where the points belong (without the full extent)
 
-get_regional_unit_id <- function(data, lon, lat, quiet = TRUE) {
+get_regional_unit_id <- function(data, lon, lat, lookup_dir = tempdir(), quiet = TRUE) {
 
   # Check if input data is of type data.frame,
   # data.table or tibble
@@ -74,7 +78,7 @@ get_regional_unit_id <- function(data, lon, lat, quiet = TRUE) {
   options(timeout = max(300, getOption("timeout")))
 
   # global file of regional units ids
-  reg_unit_file <- paste0(tempdir(), "/regional_unit_ovr.tif")
+  reg_unit_file <- paste0(lookup_dir, "/regional_unit_ovr.tif")
 
   # define download paths (two options):
   nimbus_url_base <- "https://public.igb-berlin.de/index.php/s/agciopgzXjWswF4/download?path=%2F"
@@ -83,7 +87,7 @@ get_regional_unit_id <- function(data, lon, lat, quiet = TRUE) {
   gdrive_url_full <- paste0(gdrive_url_base, "1ykV0jRCglz-_fdc4CJDMZC87VMsxzXE4&confirm=t")
 
   # If the required file does not already exist,
-  # download it into the tempdir()
+  # download it into the lookup_dir
   if (file.exists(reg_unit_file)) {
     message(paste("Will use this file (already downloaded):", reg_unit_file))
   } else {
@@ -154,14 +158,14 @@ get_regional_unit_id <- function(data, lon, lat, quiet = TRUE) {
     select(matches(c(lon, lat)))
 
   # Export taxon occurrence points
-  coord_tmp_path <- paste0(tempdir(), "/coordinates_", rand_string, ".txt")
+  coord_tmp_path <- paste0(lookup_dir, "/coordinates_", rand_string, ".txt")
 
   ## Note:Only export lon/lat column
   fwrite(coord, coord_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = " ")
 
   # Path where tmp regional unit ids text file will be written
-  ids_tmp_path <- paste0(tempdir(), "/reg_unit_ids", rand_string, ".txt")
+  ids_tmp_path <- paste0(lookup_dir, "/reg_unit_ids", rand_string, ".txt")
 
   # Check operating system
   sys_os <- get_os()

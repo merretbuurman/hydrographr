@@ -10,6 +10,10 @@
 #' the longitude / latitude coordinates in WGS84.
 #' @param lon character. The name of the column with the longitude coordinates.
 #' @param lat character. The name of the column with the latitude coordinates.
+#' @param lookup_dir character. Optional. The path to the temp dir to use for
+#' downloading and storing ancillary files. If not set, tempdir() is used.
+#' In some cases, windows users have issues with using tempdir(), so passing
+#' your own path can help in these cases.
 #' @importFrom data.table fread
 #' @export
 #'
@@ -32,12 +36,12 @@
 #'             lon = "longitude", lat = "latitude")
 
 
-get_tile_id <- function(data, lon, lat) {
+get_tile_id <- function(data, lon, lat, lookup_dir = tempdir()) {
 
-  reg_un <- get_regional_unit_id(data, lon, lat)
+  reg_un <- get_regional_unit_id(data, lon, lat, lookup_dir)
 
 
-  lookup_file <- paste0(tempdir(), "/lookup_tile_regunit.txt")
+  lookup_file <- paste0(lookup_dir, "/lookup_tile_regunit.txt")
 
   if (!file.exists(lookup_file)) {
     download.file("https://drive.google.com/uc?export=download&id=1deKhOEjGgvUXPwivYyH99hgHlJV7OgUv&confirm=t",
