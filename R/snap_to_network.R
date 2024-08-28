@@ -97,7 +97,8 @@
 
 snap_to_network <- function(data, lon, lat, id, stream_layer,
                             accu_layer = NULL, method = "distance", distance = 500,
-                            accumulation = 0.5, quiet = TRUE) {
+                            accumulation = 0.5, quiet = TRUE,
+                            lookup_dir = tempdir()) {
   # Check if data.frame is defined
   if (missing(data))
     stop("Input data is missing.")
@@ -190,12 +191,12 @@ snap_to_network <- function(data, lon, lat, id, stream_layer,
   coord <- coord[!duplicated(coord), ]
 
   # Export taxon occurrence points
-  coord_tmp_path <- paste0(tempdir(), "/coordinates_", rand_string, ".csv")
+  coord_tmp_path <- paste0(lookup_dir, "/coordinates_", rand_string, ".csv")
   ## Note: Only export lon/lat column
   fwrite(coord, coord_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = ",")
   # Path for tmp regional unit ids text file
-  snap_tmp_path <- paste0(tempdir(), "/snapped_points_", rand_string, ".txt")
+  snap_tmp_path <- paste0(lookup_dir, "/snapped_points_", rand_string, ".txt")
 
   # Check operating system
   sys_os <- get_os()
@@ -212,7 +213,7 @@ snap_to_network <- function(data, lon, lat, id, stream_layer,
                     package = "hydrographr"),
         args = c(coord_tmp_path, id, lon, lat,
                  stream_layer, accu_layer, method, distance, accumulation,
-                 snap_tmp_path, tempdir()),
+                 snap_tmp_path, lookup_dir),
         echo = !quiet)
 
 
@@ -225,7 +226,7 @@ snap_to_network <- function(data, lon, lat, id, stream_layer,
     wsl_stream_layer <- fix_path(stream_layer)
     wsl_accu_layer <- ifelse(is.null(accu_layer), "NA", fix_path(accu_layer))
     wsl_snap_tmp_path <- fix_path(snap_tmp_path)
-    wsl_tmp_path <- fix_path(tempdir())
+    wsl_tmp_path <- fix_path(lookup_dir)
     wsl_sh_file <- fix_path(system.file("sh", "snap_to_network.sh",
                                         package = "hydrographr"))
 
