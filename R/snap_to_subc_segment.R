@@ -120,7 +120,8 @@
 
 snap_to_subc_segment <- function(data, lon, lat, id, basin_id = NULL,
                                  subc_id = NULL, basin_layer, subc_layer,
-                                 stream_layer, n_cores = 1, quiet = TRUE) {
+                                 stream_layer, n_cores = 1, quiet = TRUE,
+                                 lookup_dir = tempdir()) {
 
   # Check if any of the arguments is missing
   for (arg in  c(data, lon, lat, id, basin_layer, subc_layer,
@@ -247,11 +248,11 @@ snap_to_subc_segment <- function(data, lon, lat, id, basin_id = NULL,
   # output coordinates and input ids file
   rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
   # Export taxon point ids
-  ids_tmp_path <- paste0(tempdir(), "/ids_", rand_string, ".csv")
+  ids_tmp_path <- paste0(lookup_dir, "/ids_", rand_string, ".csv")
   fwrite(ids, ids_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = ",")
   # Path for tmp regional unit ids text file
-  snap_tmp_path <- paste0(tempdir(), "/snapped_points", rand_string, ".csv")
+  snap_tmp_path <- paste0(lookup_dir, "/snapped_points", rand_string, ".csv")
 
   # Check operating system
   sys_os <- get_os()
@@ -263,7 +264,7 @@ snap_to_subc_segment <- function(data, lon, lat, id, basin_id = NULL,
     processx::run(system.file("sh", "snap_to_subc_segment.sh",
                     package = "hydrographr"),
         args = c(ids_tmp_path, lon, lat, basin_layer, subc_layer, stream_layer,
-                 n_cores, snap_tmp_path,  tempdir()),
+                 n_cores, snap_tmp_path,  lookup_dir),
         echo = !quiet)
 
 
@@ -277,7 +278,7 @@ snap_to_subc_segment <- function(data, lon, lat, id, basin_id = NULL,
     wsl_subc_layer <- fix_path(subc_layer)
     wsl_stream_layer <- fix_path(stream_layer)
     wsl_snap_tmp_path <- fix_path(snap_tmp_path)
-    wsl_tmp_path <- fix_path(tempdir())
+    wsl_tmp_path <- fix_path(lookup_dir)
     wsl_sh_file <- fix_path(system.file("sh", "snap_to_subc_segment.sh",
                                         package = "hydrographr"))
 
@@ -288,7 +289,7 @@ snap_to_subc_segment <- function(data, lon, lat, id, basin_id = NULL,
                  wsl_snap_tmp_path, wsl_tmp_path, wsl_sh_file),
         echo = !quiet)
   }
-  snapped_coord <- fread(paste0(tempdir(), "/snapped_points",
+  snapped_coord <- fread(paste0(lookup_dir, "/snapped_points",
                                 rand_string, ".csv"),
                          keepLeadingZeros = TRUE, header = TRUE, sep = ",")
 

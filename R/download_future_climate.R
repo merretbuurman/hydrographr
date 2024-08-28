@@ -121,7 +121,8 @@
 download_future_climate <- function(variable, file_format = "csv",
                          time_period = NULL, scenario = NULL,
                          model = NULL, tile_id = NULL,
-                         download_dir = ".", delete_zips = TRUE) {
+                         download_dir = ".", delete_zips = TRUE,
+                         lookup_dir = tempdir()) {
 
   # Introductory steps
 
@@ -129,8 +130,8 @@ download_future_climate <- function(variable, file_format = "csv",
   options(timeout=14400)
 
   # Download lookup table with the size of each file
-  # if it doesn't exist in the tempdir()
-  file_size_file <- paste0(tempdir(), "/futureclimate90m_paths_file_sizes.txt")
+  # if it doesn't exist in the lookup_dir
+  file_size_file <- paste0(lookup_dir, "/futureclimate90m_paths_file_sizes.txt")
   if (!file.exists(file_size_file)) {
     message('Downloading futureclimate90m_paths_file_sizes.txt...')
     download.file("https://public.igb-berlin.de/index.php/s/zw56kEd25NsQqcQ/download?path=%2FREADME/futureclimate90m_paths_file_sizes.txt",

@@ -69,7 +69,8 @@
 
 get_modelfit_table <- function(data, spec, lon, lat,
                                pseudoabs = NULL, subc, predict_table,
-                               mod_fit_table, read = TRUE, quiet = TRUE) {
+                               mod_fit_table, read = TRUE, quiet = TRUE,
+                               lookup_dir = tempdir()) {
 
   # Check if data.frame is defined
   if (missing(data))
@@ -112,7 +113,7 @@ get_modelfit_table <- function(data, spec, lon, lat,
   coord <- coord[!duplicated(coord), ]
 
   # Export taxon occurrence points
-  coord_tmp_path <- paste0(tempdir(), "/coordinates_", rand_string, ".csv")
+  coord_tmp_path <- paste0(lookup_dir, "/coordinates_", rand_string, ".csv")
 
   ## Note:Only export lon/lat column
   fwrite(coord, coord_tmp_path, col.names = TRUE,
@@ -130,7 +131,7 @@ get_modelfit_table <- function(data, spec, lon, lat,
     processx::run(system.file("sh", "get_modelfit_table.sh",
                               package = "hydrographr"),
                   args = c(coord_tmp_path, predict_table, subc,
-                           pseudoabs, tempdir(), mod_fit_table),
+                           pseudoabs, lookup_dir, mod_fit_table),
                   echo = !quiet)
   } else {
     # Check if WSL and Ubuntu is installed
@@ -140,7 +141,7 @@ get_modelfit_table <- function(data, spec, lon, lat,
     wsl_subc <- fix_path(subc)
     wsl_predict_table <- fix_path(predict_table)
     wsl_pseudoabs <- fix_path(pseudoabs)
-    wsl_tmp_path <- fix_path(tempdir())
+    wsl_tmp_path <- fix_path(lookup_dir)
     wsl_mod_fit_table <- fix_path(mod_fit_table)
     wsl_sh_file <- fix_path(
                             system.file("sh", "get_modelfit_table.sh",

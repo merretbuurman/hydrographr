@@ -105,7 +105,7 @@
 get_upstream_catchment <- function(data, id, lon, lat, direction_layer = NULL,
                                    out_dir = NULL, n_cores = NULL,
                                    compression = "low", bigtiff = TRUE,
-                                   quiet = TRUE) {
+                                   quiet = TRUE, lookup_dir = tempdir()) {
 
   # Check if data.frame is defined
   if (missing(data))
@@ -200,7 +200,7 @@ get_upstream_catchment <- function(data, id, lon, lat, direction_layer = NULL,
   coord_id <- as.data.table(data)[, ..columns]
 
   # Export occurrence points
-  coord_tmp_path <- paste0(tempdir(), "/coordinates_id_", rand_string, ".txt")
+  coord_tmp_path <- paste0(lookup_dir, "/coordinates_id_", rand_string, ".txt")
   ## Note:Only export lon/lat and id columns
   fwrite(coord_id, coord_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = " ")

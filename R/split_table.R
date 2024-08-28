@@ -42,7 +42,7 @@
 
 
 split_table <- function(data, split = NULL, split_tbl_path,
-                        read = FALSE, quiet = TRUE) {
+                        read = FALSE, quiet = TRUE, lookup_dir = tempdir()) {
 
   # Check if input data is of type data.frame,
   # data.table or tibble
@@ -66,7 +66,7 @@ split_table <- function(data, split = NULL, split_tbl_path,
 
   rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
 
-  table_tmp_path <- paste0(tempdir(), "/split_table_", rand_string, ".csv")
+  table_tmp_path <- paste0(lookup_dir, "/split_table_", rand_string, ".csv")
 
   fwrite(data, table_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = ",")

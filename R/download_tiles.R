@@ -147,7 +147,8 @@
 
 download_tiles <- function(variable, file_format = "tif",
                            tile_id = NULL, reg_unit_id = NULL,
-                           global = FALSE, download_dir = ".") {
+                           global = FALSE, download_dir = ".",
+                           lookup_dir = tempdir()) {
 
   # Introductory steps
 
@@ -155,8 +156,8 @@ download_tiles <- function(variable, file_format = "tif",
   options(timeout=14400)
 
   # Download lookup table with the size of each file
-  # if it doesn't exist in the tempdir()
-  file_size_file <- paste0(tempdir(), "/hydrography90m_paths_file_sizes.txt")
+  # if it doesn't exist in the lookup_dir
+  file_size_file <- paste0(lookup_dir, "/hydrography90m_paths_file_sizes.txt")
   if (!file.exists(file_size_file)) {
     download.file("https://drive.google.com/uc?export=download&id=1SEkcgGPutP6ZQPvYtzICh_gcGnVgH_uR&confirm=t",
                   destfile = file_size_file, mode = "wb")

@@ -85,7 +85,8 @@ reclass_raster <- function(data, rast_val, new_val, raster_layer,
                            recl_layer,
                            no_data = -9999, type = "Int32",
                            compression = "low", bigtiff = TRUE,
-                           read = FALSE, quiet = TRUE) {
+                           read = FALSE, quiet = TRUE,
+                           lookup_dir = tempdir()) {
   # Check operating system
   sys_os <- get_os()
   # Check if data.frame is defined
@@ -189,7 +190,7 @@ reclass_raster <- function(data, rast_val, new_val, raster_layer,
   # rules .txt file
   rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
   # Path to the text file with the reclassification rules
-  rules_path <- paste0(tempdir(), "/reclass_rules_", rand_string, ".txt")
+  rules_path <- paste0(lookup_dir, "/reclass_rules_", rand_string, ".txt")
   # Write rules as a .txt file to the temporary folder
   fwrite(rules, rules_path, sep = " ", col.names = FALSE)
 

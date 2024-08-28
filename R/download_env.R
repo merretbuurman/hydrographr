@@ -163,7 +163,8 @@
 
 download_env <- function(variable, file_format = "txt", years = NULL,
                          tile_id = NULL,
-                         download_dir = ".", delete_zips = TRUE) {
+                         download_dir = ".", delete_zips = TRUE,
+                         lookup_dir = tempdir()) {
 
   # Introductory steps
 
@@ -171,8 +172,8 @@ download_env <- function(variable, file_format = "txt", years = NULL,
   options(timeout=14400)
 
   # Download lookup table with the size of each file
-  # if it doesn't exist in the tempdir()
-  file_size_file <- paste0(tempdir(), "/environment90m_paths_file_sizes.txt")
+  # if it doesn't exist in the lookup_dir
+  file_size_file <- paste0(lookup_dir, "/environment90m_paths_file_sizes.txt")
   if (!file.exists(file_size_file)) {
     message('Downloading environment90m_paths_file_sizes.txt...')
     download.file("https://public.igb-berlin.de/index.php/s/zw56kEd25NsQqcQ/download?path=%2FREADME/environment90m_paths_file_sizes.txt",

@@ -120,7 +120,8 @@
 
 
 get_distance <- function(data, lon, lat, id, stream_layer = NULL,
-                         distance = "both", n_cores = 1, quiet = TRUE) {
+                         distance = "both", n_cores = 1, quiet = TRUE,
+                         lookup_dir = tempdir()) {
 
 
   # Check if any of the arguments is missing
@@ -226,28 +227,28 @@ get_distance <- function(data, lon, lat, id, stream_layer = NULL,
   # output tables and input ids file
   rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
   # Export taxon point ids
-  ids_tmp_path <- paste0(tempdir(), "/ids_", rand_string, ".csv")
+  ids_tmp_path <- paste0(lookup_dir, "/ids_", rand_string, ".csv")
   fwrite(ids, ids_tmp_path, col.names = TRUE,
          row.names = FALSE, quote = FALSE, sep = ",")
   # Path for distance output tmp dir
-  dist_tmp_dir <- paste0(tempdir(), "/distance")
+  dist_tmp_dir <- paste0(lookup_dir, "/distance")
   # Create distance general tmp dir
   dir.create(dist_tmp_dir, showWarnings = FALSE)
 
   # Create output directories for distance tables
   # and assign paths to the output files within the directories
   if(distance == "euclidean" || distance == "both") {
-    dir.create(paste0(tempdir(), "/distance/dist_eucl"), showWarnings = FALSE)
+    dir.create(paste0(lookup_dir, "/distance/dist_eucl"), showWarnings = FALSE)
     # Path for tmp euclidean distance input csv file
-    dist_eucl_tmp_path <- paste0(tempdir(),
+    dist_eucl_tmp_path <- paste0(lookup_dir,
                                  "/distance/dist_eucl/dist_euclidean_",
                                  rand_string, ".csv")
   } else {dist_eucl_tmp_path <- NULL}
 
   if(distance == "network" || distance == "both") {
-    dir.create(paste0(tempdir(), "/distance/dist_net"), showWarnings = FALSE)
+    dir.create(paste0(lookup_dir, "/distance/dist_net"), showWarnings = FALSE)
     # Path for tmp network distance input csv file
-    dist_net_tmp_path <- paste0(tempdir(),
+    dist_net_tmp_path <- paste0(lookup_dir,
                                 "/distance/dist_net/dist_network_",
                                 rand_string, ".csv")
 
