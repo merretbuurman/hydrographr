@@ -127,7 +127,7 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check if values of the new_val columns are numeric when no reclass_values is given
   if (isFALSE(reclass_value)) {
     if (!is.integer(data[[new_val]])) {
-      stop(paste0("reclass_value:", reclass_value, " must be integers."))
+      stop(paste0("new_val:", new_val, ": Column must contain integers."))
     }
   }
 
