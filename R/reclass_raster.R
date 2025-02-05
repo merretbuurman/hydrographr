@@ -92,8 +92,10 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
                            no_data = -9999, type = "Int32",
                            compression = "low", bigtiff = TRUE,
                            read = FALSE, quiet = TRUE) {
+
   # Check operating system
   sys_os <- get_os()
+
   # Check if data.frame is defined
   if (missing(data))
     stop("data: Input data.frame is missing.")
@@ -127,15 +129,14 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     if (!is.integer(data[[new_val]])) {
       stop(paste0("reclass_value:", reclass_value, " must be integers."))
     }
-
   }
 
   # Check if reclass_value is an numeric or integer value
-    if (!isFALSE(reclass_value)) {
-      if (!(is.numeric(reclass_value) || is.integer(reclass_value))) {
-        stop(paste0("reclass_value:", reclass_value, " must be integers."))
-      }
+  if (!isFALSE(reclass_value)) {
+    if (!(is.numeric(reclass_value) || is.integer(reclass_value))) {
+      stop(paste0("reclass_value:", reclass_value, " must be integers."))
     }
+  }
 
   # Check if raster_layer is defined
   if (missing(raster_layer))
@@ -148,8 +149,8 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check if raster_layer ends and recl_layer with .tif
   if (!endsWith(raster_layer, ".tif"))
     stop("raster_layer: Input raster is not a .tif file.")
-    if (!endsWith(recl_layer, ".tif"))
-      stop("recl_layer: Output raster file path needs to end with .tif.")
+  if (!endsWith(recl_layer, ".tif"))
+    stop("recl_layer: Output raster file path needs to end with .tif.")
 
   # Check if recl_layer is defined
   if (missing(recl_layer))
@@ -192,6 +193,9 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   if (!is.logical(quiet))
     stop("quiet: Has to be TRUE or FALSE.")
 
+
+  ## Finished the input checks!
+
   # Make bash scripts executable
   make_sh_exec()
 
@@ -202,12 +206,13 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   rast_dat <- as.data.frame(unique(rast_dat[[1]]))
   colnames(rast_dat) <- "val"
 
-    # Check if rast_val is missing raster values
-    if (length(data[[rast_val]]) < length(rast_dat[[1]])) {
-      print("Reclassification is missing raster values: Warning NA's are introduced!")
-    }
-    # Check and handle if raster values are provided in rast_val that are not in the raster tif file.
-    if (length(data[[rast_val]]) != length(rast_dat[[1]])) {
+  # Check if rast_val is missing raster values
+  if (length(data[[rast_val]]) < length(rast_dat[[1]])) {
+    print("Reclassification is missing raster values: Warning NA's are introduced!")
+  }
+
+  # Check and handle if raster values are provided in rast_val that are not in the raster tif file.
+  if (length(data[[rast_val]]) != length(rast_dat[[1]])) {
     # Index all raster values which are not in the input data table
     indx_miss_raster <- which(rast_dat[[1]] %in% data[[rast_val]])
     # Get missing raster values
@@ -250,18 +255,19 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
                             lapply(lapply(dat, unlist),
                                    `length<-`, max(lengths(dat)))), paste0(c(rast_val, new_val)))
     if (isFALSE(reclass_value)) {
-    # The r.reclass function of GRASS GIS requires a text file
-    # including the old and the new value with an = between
-    # (e.g. 1 = 20)
-    rules <- data.table::data.table(old = data[[rast_val]],
-                                    equal = "=",
-                                    new = data[[new_val]])
+      # The r.reclass function of GRASS GIS requires a text file
+      # including the old and the new value with an = between
+      # (e.g. 1 = 20)
+      rules <- data.table::data.table(old = data[[rast_val]],
+                                      equal = "=",
+                                      new = data[[new_val]])
+
     }
   }
 
   if (!isFALSE(reclass_value)) {
 
-  # use reclass_value for reclassification
+    # use reclass_value for reclassification
     data$reclass <- reclass_value
     data$reclass <- as.integer(data$reclass)
     #
@@ -279,15 +285,15 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
                                     new = data[["reclass"]])
-   }
+  }
   # else {
-  #
-  # # The r.reclass function of GRASS GIS requires a text file
-  # # including the old and the new value with an = between
-  # # (e.g. 1 = 20)
-  # rules <- data.table::data.table(old = data[[rast_val]],
-  #                     equal = "=",
-  #                     new = data[[new_val]])
+    #
+    # # The r.reclass function of GRASS GIS requires a text file
+    # # including the old and the new value with an = between
+    # # (e.g. 1 = 20)
+    # rules <- data.table::data.table(old = data[[rast_val]],
+    #                     equal = "=",
+    #                     new = data[[new_val]])
   # }
   # Create random string to attach to the file name of the temporary
   # rules .txt file
@@ -303,13 +309,13 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
 
   if (system == "linux" || system == "osx") {
 
-  # Open GRASS GIS session
-  # Call external GRASS GIS command r.reclass
-  processx::run(system.file("sh", "reclass_raster.sh",
-                           package = "hydrographr"),
-      args = c(raster_layer, rules_path, recl_layer,
-               no_data, type, compression_type, compression_level, bigtiff),
-      echo = !quiet)
+    # Open GRASS GIS session
+    # Call external GRASS GIS command r.reclass
+    processx::run(system.file("sh", "reclass_raster.sh",
+                             package = "hydrographr"),
+        args = c(raster_layer, rules_path, recl_layer,
+                 no_data, type, compression_type, compression_level, bigtiff),
+        echo = !quiet)
 
   } else {
     # Check if WSL and Ubuntu are installed
