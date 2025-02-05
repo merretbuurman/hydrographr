@@ -201,30 +201,30 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
 
   # To check the raster values and data values
   # load raster and convert to data.frame
-  rast_dat <- rast(raster_layer)
-  rast_dat <- as.data.frame(rast_dat)
-  rast_dat <- as.data.frame(unique(rast_dat[[1]]))
-  colnames(rast_dat) <- "val"
+  raster_oldvalue <- rast(raster_layer)
+  raster_oldvalue <- as.data.frame(raster_oldvalue)
+  raster_oldvalue <- as.data.frame(unique(raster_oldvalue[[1]]))
+  colnames(raster_oldvalue) <- "val"
 
   # Check if rast_val is missing raster values
-  if (length(data[[rast_val]]) < length(rast_dat[[1]])) {
+  if (length(data[[rast_val]]) < length(raster_oldvalue[[1]])) {
     print("Reclassification is missing raster values: Warning NA's are introduced!")
   }
 
   # Check and handle if raster values are provided in rast_val that are not in the raster tif file.
-  if (length(data[[rast_val]]) != length(rast_dat[[1]])) {
+  if (length(data[[rast_val]]) != length(raster_oldvalue[[1]])) {
     # Index all raster values which are not in the input data table
-    indx_miss_raster <- which(rast_dat[[1]] %in% data[[rast_val]])
+    indx_miss_raster <- which(raster_oldvalue[[1]] %in% data[[rast_val]])
     # Get missing raster values
-    miss_raster <- rast_dat[-c(indx_miss_raster),]
+    miss_raster <- raster_oldvalue[-c(indx_miss_raster),]
     print(paste0("These values of the raster were not found in the data table:", 
                  paste(miss_raster, collapse = ", ")))
     # Write all values found in raster tif file and input data table as data frame
-    same_val1 <- as.data.frame(rast_dat[c(indx_miss_raster),])
+    same_val1 <- as.data.frame(raster_oldvalue[c(indx_miss_raster),])
     # Set name for raster values
     colnames(same_val1) <- "val"
     # Index all input data table values which are not in the raster tif file
-    indx_miss_rast_val <- which(data[[rast_val]] %in% rast_dat[[1]])
+    indx_miss_rast_val <- which(data[[rast_val]] %in% raster_oldvalue[[1]])
     # Get missing input data values
     miss_rast_val <- data[-c(indx_miss_rast_val),]
     # Get only missing raster input data values to throw out message
