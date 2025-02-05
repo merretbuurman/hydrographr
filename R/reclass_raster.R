@@ -254,18 +254,16 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     data <- setNames(do.call(cbind.data.frame,
                             lapply(lapply(dat, unlist),
                                    `length<-`, max(lengths(dat)))), paste0(c(rast_val, new_val)))
-    if (isFALSE(reclass_value)) {
+  }
+
+  if (isFALSE(reclass_value)) {
       # The r.reclass function of GRASS GIS requires a text file
       # including the old and the new value with an = between
       # (e.g. 1 = 20)
       rules <- data.table::data.table(old = data[[rast_val]],
                                       equal = "=",
                                       new = data[[new_val]])
-
-    }
-  }
-
-  if (!isFALSE(reclass_value)) {
+  } else {
 
     # use reclass_value for reclassification
     data$reclass <- reclass_value
