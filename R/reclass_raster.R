@@ -214,9 +214,11 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check and handle if raster values are provided in rast_val that are not in the raster tif file.
   if (length(data[[rast_val]]) != length(raster_oldvalue$rast_val)) {
     # Index all raster values which are not in the input data table
-    indx_miss_raster <- which(raster_oldvalue$rast_val %in% data[[rast_val]])
+    indx_notmiss_raster <- which(raster_oldvalue$rast_val %in% data[[rast_val]])
     # Get missing raster values
-    miss_raster <- raster_oldvalue[-c(indx_miss_raster),]
+    # These are all the values in the input raster, which have NO corresponding value in the table!
+    # (but we only get into this section if the table contains values that are not in the raster, so the opposite...)
+    miss_raster <- raster_oldvalue[-c(indx_notmiss_raster),]
     print(paste0("These values of the raster were not found in the data table:", 
                  paste(miss_raster, collapse = ", ")))
     # Write all values found in raster tif file and input data table as data frame
