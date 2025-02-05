@@ -307,7 +307,7 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   rm(indx_miss_raster, miss_raster, same_val1, indx_miss_rast_val,
      miss_rast_val, missing_rast_values, same_val2, same_val)
 
-  if (system == "linux" || system == "osx") {
+  if (sys_os == "linux" || sys_os == "osx") {
 
     # Open GRASS GIS session
     # Call external GRASS GIS command r.reclass
