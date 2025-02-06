@@ -9,36 +9,41 @@
 #' (e.g. 1000) to achieve integer values, otherwise the GRASS GIS r.reclass will
 #' round the raster values down to the next integer which is not always desired.
 #'
-#' @param data a data.frame or data.table with the original and new values to be
-#' written to the raster.
-#' @param rast_val character. The name of the column with the original raster
-#' values.
-#' @param new_val character. The name of the column with the new raster values,
-#' which need to be integer values. In case of floating point values, consider
-#' multiplying the values e.g. by 1000 to keep three decimals.
-#' @param reclass_value integer. Value to reclassify the entire raster.
-#' Default is FALSE. Note that in case reclass_value and new_val 
-#' is provided the raster is reclassified on reclass_value.
-#' @param raster_layer Full path to the input raster .tif layer.
-#' @param recl_layer character. Full path of the output .tif layer, i.e., the
-#' reclassified raster file.
+#' @param data data.frame or data.table. Input table with the original and new
+#'  values used to reclassify the raster.
+#' @param rast_val character. The name of the column in the input table
+#'  containing the original raster values.
+#' @param new_val character. The name of the column in the input table
+#'  containing the new raster values, which need to be integer values.
+#'  In case of floating point values, consider multiplying the values e.g.
+#'  by 1000 to keep three decimals.
+#' @param reclass_value integer. Value to be assigned to all pixels of the
+#'  raster whose values are listed in the input table (column rast_val). (Pixels
+#'  whose value is not listed in the input table will be assigned NA).
+#'  If reclass_value is given, the column new_val of the input table is ignored.
+#'  Default is FALSE, i.e. the column new_val of the input table will be used.
+#' @param raster_layer Full path to the input raster layer (.tif file).
+#' @param recl_layer character. Full path of the output raster layer
+#'  (.tif file), i.e., the reclassified raster file.
 #' @param no_data numeric. The no_data value of the new .tif layer.
 #' Default is -9999.
-#' @param type character. Data type; Options are Byte, Int16, UInt16, Int32,
-#' UInt32,CInt16, CInt32. Default is Int32. Note that only integer values are
-#' allowed.
-#' @param compression character. Compression of the written output file.
-#' Compression levels can be defined as "none", "low", or "high". Default is
-#' "low", referring to compression type "DEFLATE" and compression level 2.
-#' "high" refers to compression level 9.
+#' @param type character. Data type (needed by GRASS r.out.gdal, so check the
+#'  GRASS documentation). Options are Byte, Int16, UInt16, Int32, UInt32,
+#'  CInt16, CInt32. Default is Int32. Note that only integer types are allowed.
+#' @param compression character. Compression of the written output file (needed
+#'  by GRASS r.out.gdal, so check the GRASS documentation. Compression levels
+#'  can be defined as "none", "low", or "high". Default is "low", referring to
+#'  compression type "DEFLATE" and compression level 2. "high" refers to
+#'  compression level 9.
 #' @param bigtiff logical. Define whether the output file is expected to be a
-#' BIGTIFF (file size larger than 4 GB). If FALSE and size > 4GB no file will be
-#' written. Default is TRUE.
+#'  BIGTIFF (file size larger than 4 GB). If FALSE and size > 4GB no file will
+#'  be written. (Needed by GRASS r.out.gdal, so check the GRASS documentation.
+#'  Default is TRUE.
 #' @param read logical. If TRUE, then the reclassified raster .tif layer
-#' gets read into R as a SpatRaster (terra object).
-#' If FALSE, the layer is only stored on disk. Default is FALSE.
+#'  gets read into R as a SpatRaster (terra object).
+#'  If FALSE, the layer is only stored on disk. Default is FALSE.
 #' @param quiet logical. If FALSE, the standard output will be printed.
-#' Default is TRUE.
+#'  Default is TRUE.
 #'
 #' @importFrom stringi stri_rand_strings
 #' @importFrom data.table data.table fwrite
@@ -96,6 +101,8 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check operating system
   sys_os <- get_os()
 
+  ### Check the input table:
+
   # Check if data.frame is defined
   if (missing(data))
     stop("data: Input data.frame is missing.")
@@ -104,27 +111,31 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   if (!is(data, "data.frame"))
     stop("data: Has to be of class 'data.frame'.")
 
+  ### Checks about the column rast_val:
+
   # Check if rast_val is defined
   if (missing(rast_val))
     stop("rast_val: Column name of current raster value is missing.")
 
-  # Check if rast_val column names exist
+  # Check if rast_val column name exists
   if (is.null(data[[rast_val]]))
     stop(paste0("rast_val: Column name '", rast_val,
     "' does not exist."))
 
-  # Check if values of the rast_val columns are numeric
+  # Check if values of the rast_val column are integer
   if (!is.integer(data[[rast_val]]))
-    stop(
-      paste0("rast_val: Values of column ", rast_val,
+    stop(paste0("rast_val: Values of column ", rast_val,
       " have to be integers."))
 
-  # Check if new_val column names exist when no reclass_values is given
+  ### Check if the new values are given by one value (reclass_value),
+  ### or by a column in the table:
+
+  # Check if new_val column name exists (when no reclass_value is given)
   if (isFALSE(new_val) && isFALSE(reclass_value))
     stop(paste0("new_val: Column name '", new_val,
                 "' does not exist."))
 
-  # Check if values of the new_val columns are numeric when no reclass_values is given
+  # Check if values of the new_val column are numeric (when no reclass_value is given)
   if (isFALSE(reclass_value)) {
     if (!is.integer(data[[new_val]])) {
       stop(paste0("new_val:", new_val, ": Column must contain integers."))
@@ -138,15 +149,17 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     }
   }
 
+  ### Check the raster layers:
+
   # Check if raster_layer is defined
   if (missing(raster_layer))
     stop("raster_layer: Path of the input raster layer is missing.")
 
-  # Check if raster_layer and exists
+  # Check if raster_layer exists
   if (!file.exists(raster_layer))
     stop(paste0("raster_layer: ", raster_layer, " does not exist."))
 
-  # Check if raster_layer ends and recl_layer with .tif
+  # Check if raster_layer and recl_layer ends with .tif
   if (!endsWith(raster_layer, ".tif"))
     stop("raster_layer: Input raster is not a .tif file.")
   if (!endsWith(recl_layer, ".tif"))
@@ -155,6 +168,8 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check if recl_layer is defined
   if (missing(recl_layer))
     stop("recl_layer: Path for the output raster layer is missing.")
+
+  ### Other checks:
 
   # Check if type is one of the listed types
   if (!(type == "Int16" || type == "UInt16" || type == "CInt16" ||
@@ -265,6 +280,22 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
       rules <- data.table::data.table(old = data[[rast_val]],
                                       equal = "=",
                                       new = data[[new_val]])
+
+      # For testing influence of NAs in rules table:
+      #rules <- rbind(rules, list(NA,"=","99"))
+      #rules <- rbind(rules, list("*","=","88"))
+      #
+      # If we had a row in the table where old value is NA and new value is,
+      # say, 99, this would lead to a reclass rule line
+      #  = 99
+      # This would NOT reclassify any old NAs (NA in old raster), or any
+      # non-classified values (which have a value in old raster that is not
+      # present in the reclass rules) to 99. The line would be ignored.
+      #
+      # If we add a line
+      # * = 88
+      # then this will classify all leftover pixels that had a values in the
+      # old raster (not NA!), but are not in the reclass rules, to 88.
   } else {
 
     # use reclass_value for reclassification
@@ -342,7 +373,6 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   file.remove(rules_path)
 
   if (file.exists(recl_layer)) {
-    # Print message
     cat("Reclassified raster saved under: ", recl_layer, "\n")
   } else {
     stop("Output file was not written. File size may have been larger than 4GB",
@@ -354,5 +384,4 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     recl_rast <- rast(recl_layer)
     return(recl_rast)
   }
-
 }
