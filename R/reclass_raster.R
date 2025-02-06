@@ -127,6 +127,14 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     stop(paste0("rast_val: Values of column ", rast_val,
       " have to be integers."))
 
+  # Check if rast_val column contents are unique, as we cannot assign two
+  # different values to the same pixels. (In that case GRASS ignores the
+  # first mapping and only uses the second mapping, but to avoid this, we
+  # disallow non-unique values.
+  if ( length(data[[rast_val]]) != length(unique(data[[rast_val]])) )
+    stop(paste0("rast_val: Column '", rast_val,
+    "' contains non-unique values."))
+
   ### Check if the new values are given by one value (reclass_value),
   ### or by a column in the table:
 
@@ -139,6 +147,18 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   if (isFALSE(reclass_value)) {
     if (!is.integer(data[[new_val]])) {
       stop(paste0("new_val:", new_val, ": Column must contain integers."))
+    }
+  }
+
+  # Check if values of the new_val column are NA (when no reclass_value is given)
+  # This is not fatal, but inform user...
+  if (isFALSE(reclass_value)) {
+    if (any(is.na(data[[new_val]]))) {
+      num <- sum(is.na(data[[new_val]]))
+      if (!quiet) message(paste0("Info: NA values are present among the new",
+                                 " values (column '", new_val, "', ", num,
+                                 " NA values). Not a problem, but these may",
+                                 " result in NA pixels in the output raster.")
     }
   }
 
@@ -207,7 +227,6 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # Check if quiet is logical
   if (!is.logical(quiet))
     stop("quiet: Has to be TRUE or FALSE.")
-
 
   ## Finished the input checks!
 
