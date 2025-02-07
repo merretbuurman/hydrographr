@@ -292,65 +292,46 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
                                    `length<-`, max(lengths(dat)))), paste0(c(rast_val, new_val)))
   }
 
+
+
+  # Create the rules file:
+  #
+  # The r.reclass function of GRASS GIS requires a text file
+  # including the old and the new value with an = between
+  # (e.g. 1 = 20)
+  #
+  # For testing influence of NAs in rules table:
+  #rules <- rbind(rules, list(NA,"=","99"))
+  #rules <- rbind(rules, list("*","=","88"))
+  #
+  # If we had a row in the table where old value is NA and new value is,
+  # say, 99, this would lead to a reclass rule line
+  #  = 99
+  # This would NOT reclassify any old NAs (NA in old raster), or any
+  # non-classified values (which have a value in old raster that is not
+  # present in the reclass rules) to 99. The line would be ignored.
+  #
+  # If we add a line
+  # * = 88
+  # then this will classify all leftover pixels that had a values in the
+  # old raster (not NA!), but are not in the reclass rules, to 88.
   if (isFALSE(reclass_value)) {
-      # The r.reclass function of GRASS GIS requires a text file
-      # including the old and the new value with an = between
-      # (e.g. 1 = 20)
-      rules <- data.table::data.table(old = data[[rast_val]],
-                                      equal = "=",
-                                      new = data[[new_val]])
+    rules <- data.table::data.table(old = data[[rast_val]],
+                                    equal = "=",
+                                    new = data[[new_val]])
 
-      # For testing influence of NAs in rules table:
-      #rules <- rbind(rules, list(NA,"=","99"))
-      #rules <- rbind(rules, list("*","=","88"))
-      #
-      # If we had a row in the table where old value is NA and new value is,
-      # say, 99, this would lead to a reclass rule line
-      #  = 99
-      # This would NOT reclassify any old NAs (NA in old raster), or any
-      # non-classified values (which have a value in old raster that is not
-      # present in the reclass rules) to 99. The line would be ignored.
-      #
-      # If we add a line
-      # * = 88
-      # then this will classify all leftover pixels that had a values in the
-      # old raster (not NA!), but are not in the reclass rules, to 88.
   } else {
-
-    # use reclass_value for reclassification
     data$reclass <- reclass_value
     data$reclass <- as.integer(data$reclass)
-    #
-    #
-    #
-    #
-    #
-    # rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
-    # rules_path <- paste0(tempdir(), "/reclass_rules_", rand_string, ".txt")
-    # fwrite(data, rules_path, sep = " ", col.names = TRUE)
-
-    # The r.reclass function of GRASS GIS requires a text file
-    # including the old and the new value with an = between
-    # (e.g. 1 = 20)
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
                                     new = data[["reclass"]])
   }
-  # else {
-    #
-    # # The r.reclass function of GRASS GIS requires a text file
-    # # including the old and the new value with an = between
-    # # (e.g. 1 = 20)
-    # rules <- data.table::data.table(old = data[[rast_val]],
-    #                     equal = "=",
-    #                     new = data[[new_val]])
-  # }
-  # Create random string to attach to the file name of the temporary
-  # rules .txt file
+
+  # Write reclass rules to temp txt file in temp dir, for GRASS to use.
+  # (Will be removed further below)
   rand_string <- stri_rand_strings(n = 1, length = 8, pattern = "[A-Za-z0-9]")
-  # Path to the text file with the reclassification rules
   rules_path <- paste0(tempdir(), "/reclass_rules_", rand_string, ".txt")
-  # Write rules as a .txt file to the temporary folder
   fwrite(rules, rules_path, sep = " ", col.names = FALSE)
 
   # Remove all temporary data files
@@ -392,14 +373,13 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   file.remove(rules_path)
 
   if (file.exists(recl_layer)) {
-    cat("Reclassified raster saved under: ", recl_layer, "\n")
+    if (!quiet) message("Reclassified raster saved under: ", recl_layer)
   } else {
     stop("Output file was not written. File size may have been larger than 4GB",
          "\nSet bigtiff = TRUE, for writing large output files.")
   }
 
   if (read == TRUE) {
-    # Read reclassified .tif layer
     recl_rast <- rast(recl_layer)
     return(recl_rast)
   }
