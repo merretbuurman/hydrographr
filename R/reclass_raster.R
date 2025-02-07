@@ -51,7 +51,7 @@
 #' @importFrom terra rast
 #' @export
 #'
-#' @author Marlene Schürz, Thomas Tomiczek
+#' @author Marlene Schürz, Thomas Tomiczek, Merret Buurman
 #'
 #' @references
 #' https://grass.osgeo.org/grass82/manuals/r.reclass.html
@@ -228,59 +228,104 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   raster_oldvalue <- as.data.frame(unique(raster_oldvalue[[1]]))
   colnames(raster_oldvalue) <- "rast_val"
 
-  # Check if rast_val is missing raster values
-  if (length(data[[rast_val]]) < length(raster_oldvalue$rast_val)) {
-    print("Reclassification is missing raster values: Warning NA's are introduced!")
+  # Four cases can happen:
+  # (1) Raster values and table values are the same set - easy!
+  # (2) Raster contains values that are missing in the table:
+  #     The output raster will contain NA values in those pixels.
+  #     Example: Big raster, we only reclassify few pixels.
+  #     TODO: Will the others really get NA, or will they keep their initial values???
+  # (3) Table contains values that are missing in the raster:
+  #     Not a problem for the reclassification, because all pixels
+  #     will have values, but the reclass rules may become too big,
+  #     so we need to remove those rows from the table.
+  #     Example: Env90m, the tables are huge, and you'll use a subset of a
+  #     raster tile to reclassify.
+  # (4) Mixed: Some raster-values are missing from the table, and some
+  #     table values are missing from the raster.
+  #     Example: Env90m, huge table, but your raster covers part of the
+  #     neighbouring area and contains some subcatchment that the table doesn't.
+
+  # If both are the same:
+  if (length(data[[rast_val]]) == length(raster_oldvalue$rast_val)) {
+    if (!quiet) message(paste0("Info: Input raster and column '", rast_val,
+                               "' of the input table contain the same set of",
+                               " (old) values. No (additional) NA values ",
+                               " introduced."))
+    #message('TRUE: ', all(data[[rast_val]] %in% raster_oldvalue$rast_val))
+    #message('TRUE: ', all(raster_oldvalue$rast_val %in% data[[rast_val]]))
   }
 
-  # Check and handle if raster values are provided in rast_val that are not in the raster tif file.
-  if (length(data[[rast_val]]) != length(raster_oldvalue$rast_val)) {
-    # Index all raster values which are not in the input data table
-    indx_notmiss_raster <- which(raster_oldvalue$rast_val %in% data[[rast_val]])
-    # Get missing raster values
-    # These are all the values in the input raster, which have NO corresponding value in the table!
-    # (but we only get into this section if the table contains values that are not in the raster, so the opposite...)
-    miss_raster <- raster_oldvalue[-c(indx_notmiss_raster),]
-    print(paste0("These values of the raster were not found in the data table:", 
-                 paste(miss_raster, collapse = ", ")))
-    # Write all values found in raster tif file and input data table as data frame
-    same_val1 <- as.data.frame(raster_oldvalue[c(indx_miss_raster),])
-    # Set name for raster values
-    colnames(same_val1) <- "val"
-    # Index all input data table values which are not in the raster tif file
-    indx_miss_rast_val <- which(data[[rast_val]] %in% raster_oldvalue$rast_val)
-    # Get missing input data values
-    miss_rast_val <- data[-c(indx_miss_rast_val),]
-    # Get only missing raster input data values to throw out message
-    missing_rast_values <- data[-c(indx_miss_rast_val),1]
-    print(paste0("These raster values of the data table were not found in the raster:", 
-                 paste(missing_rast_values, collapse = ", ")))
-    # Write all values found in input data table and raster file as data frame
-    same_val2 <- data[c(indx_miss_raster),]
-    # Combine all values found in raster and input data table
-    same_val <- as.data.frame(cbind(same_val1, same_val2))
-    # Write missing raster values as data frame
-    miss_raster <- as.data.frame(miss_raster)
-    # Set name for raster values
-    colnames(miss_raster) <- "val"
-    # Give missing values NA
-    miss_raster$rast_val <- NA
-    miss_raster$new_val <- NA
-    # Set to the same names to combine with all values table
-    colnames(miss_raster) <- c("val", rast_val, new_val)
-    # Combine all values table with missing values table and use as input data
-    data <- rbind(same_val, miss_raster)
+  # If not all raster values are in table, we probably don't need to do anything!
+  if (! all( raster_oldvalue$rast_val %in% data[[rast_val]] )) {
 
-    # List both rast_val and new_val columns to check if they are of equal length
-    dat <- list(data[[rast_val]], list(data[[new_val]]))
+    # Warn if column rast_val is missing values which are present in input raster,
+    # i.e. raster contains values that are not in the table, and which will
+    # be classified as NA in the output raster:
+    rows_raster_not_in_table <- which(! raster_oldvalue$rast_val %in% data[[rast_val]])
+    not_in_table <- raster_oldvalue$rast_val[rows_raster_not_in_table]
+    msg <- paste0("NAs introduced in output raster: Some raster values are",
+                  " missing in the input table and will result in NA pixels",
+                  " in the output raster.")
+    warning(msg)
 
-    # In case new_val is bigger than rast_val length of rast_val will be used to reclassify
-    data <- setNames(do.call(cbind.data.frame,
-                            lapply(lapply(dat, unlist),
-                                   `length<-`, max(lengths(dat)))), paste0(c(rast_val, new_val)))
+    # Inform more detail:
+    if (!quiet) {
+      num <- length(not_in_table)
+      details <- paste0(msg, " The following ", num, " raster values are",
+                        " missing in the input table (column '", rast_val,
+                        "'): ", paste0(not_in_table, collapse=", "))
+      message(details)
+    }
   }
 
 
+  # If not all table values are in the raster, we just have a lot of superfluous
+  # rows in the table that we need to take away (e.g. big Env90m tables!)
+  if (! all( data[[rast_val]] %in% raster_oldvalue$rast_val )) {
+
+    if (!quiet) message(paste("Info: Input table contains many values that",
+                              " are not present in the input raster. Removing",
+                              " those rows from the input table."))
+
+    #message("Num rows table: ", nrow(data))
+    rows_table_in_raster <- which(data[[rast_val]] %in% raster_oldvalue$rast_val)
+    data <- data[rows_table_in_raster,]
+    #message("Num rows table: ", nrow(data))
+    # Note: This also removes rows from the table where the old value is NA
+    # If we left a line where old value is NA and new value is, say, 99, this
+    # would lead to a reclass rule line " = 99", which would NOT reclassify any
+    # NAs...
+  }
+
+
+  # If any of the new values are NA, we haved to replace them
+  # with the string "NULL", which is what GRASS expects:
+  if (any(is.na(data[[new_val]]))) {
+
+    # Warn user:
+    msg <- paste0("NAs introduced in output raster: Some raster values are NA",
+                  " in the input table and will result in NA pixels in the",
+                  " output raster.")
+    warning(msg)
+
+    # Inform in more detail:
+    if (!quiet) {
+      rows_raster_NA_in_table <- which(is.na(data[[new_val]]))
+      NA_in_table <- data[[new_val]][rows_raster_NA_in_table]
+      #num <- sum(is.na(data[[new_val]]))
+      num <- sum(rows_raster_NA_in_table)
+      details <- paste0(msg, " The following ", num, " raster values are",
+                        " NA in the input table (column '", rast_val, "'): ",
+                        paste0(NA_in_table, collapse=", "))
+      message(details)
+    }
+
+    # Remove those lines OR set to "NULL" to make them nodata:
+    # (Or set to no_data? - No, that is done by GRASS!)
+    which_rows_have_NAs <- is.na(data[[new_val]])
+    data <- data[not(which_rows_have_NAs),]
+    #data[[new_val]] [is.na(data[[new_val]])] <- "NULL"
+  }
 
   # Create the rules file:
   #

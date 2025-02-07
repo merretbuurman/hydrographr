@@ -23,6 +23,7 @@ grass -f --gtext --tmp-location  $RASTER   <<'EOF'
     # Note: This struggles if the reclass rules text file is very big.
     g.message "Reclassifying raster file..."
     g.message "This may use a lot of memory and crash if the input raster is big."
+    g.message "If this step crashes, please consider using a smaller input raster and/or input table."
     r.reclass input=raster output=recl_raster rules=$RULES --overwrite
     g.message "Reclassifying raster file... DONE"
 
