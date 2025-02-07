@@ -334,44 +334,38 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   rules_path <- paste0(tempdir(), "/reclass_rules_", rand_string, ".txt")
   fwrite(rules, rules_path, sep = " ", col.names = FALSE)
 
-  # Remove all temporary data files
-  rm(indx_miss_raster, miss_raster, same_val1, indx_miss_rast_val,
-     miss_rast_val, missing_rast_values, same_val2, same_val)
 
+  # Run GRASS GIS using a bash script, which calls GRASS command r.reclass
   if (sys_os == "linux" || sys_os == "osx") {
 
-    # Open GRASS GIS session
-    # Call external GRASS GIS command r.reclass
-    processx::run(system.file("sh", "reclass_raster.sh",
-                             package = "hydrographr"),
-        args = c(raster_layer, rules_path, recl_layer,
-                 no_data, type, compression_type, compression_level, bigtiff),
-        echo = !quiet)
+    # Open GRASS GIS session under Linux or Max OS
+    processx::run(
+      system.file("sh", "reclass_raster.sh", package = "hydrographr"),
+      args = c(raster_layer, rules_path, recl_layer, no_data, type,
+               compression_type, compression_level, bigtiff),
+      echo = !quiet)
 
   } else {
+
     # Check if WSL and Ubuntu are installed
     check_wsl()
+
     # Change paths for WSL
     wsl_raster_layer <- fix_path(raster_layer)
     wsl_recl_layer <- fix_path(recl_layer)
     wsl_rules_path <- fix_path(rules_path)
     wsl_sh_file <- fix_path(
-      system.file("sh", "reclass_raster.sh",
-                  package = "hydrographr"))
+      system.file("sh", "reclass_raster.sh", package = "hydrographr"))
 
     # Open GRASS GIS session on WSL
-    # Call external GRASS GIS command r.reclass
-    processx::run(system.file("bat", "reclass_raster.bat",
-                    package = "hydrographr"),
-        args = c(wsl_raster_layer, wsl_rules_path, wsl_recl_layer,
-                 no_data, type, compression_type, compression_level, bigtiff,
-                 wsl_sh_file),
-        echo = !quiet)
-
+    processx::run(
+      system.file("bat", "reclass_raster.bat", package = "hydrographr"),
+      args = c(wsl_raster_layer, wsl_rules_path, wsl_recl_layer, no_data,
+        type, compression_type, compression_level, bigtiff, wsl_sh_file),
+      echo = !quiet)
   }
-  # Remove temporary rules file
-  file.remove(rules_path)
 
+  # Inform user about output
   if (file.exists(recl_layer)) {
     if (!quiet) message("Reclassified raster saved under: ", recl_layer)
   } else {
@@ -379,6 +373,10 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
          "\nSet bigtiff = TRUE, for writing large output files.")
   }
 
+  # Delete temporary reclass_rules txt file
+  file.remove(rules_path)
+
+  # Load output into R session
   if (read == TRUE) {
     recl_rast <- rast(recl_layer)
     return(recl_rast)
