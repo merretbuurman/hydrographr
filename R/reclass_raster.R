@@ -150,18 +150,6 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     }
   }
 
-  # Check if values of the new_val column are NA (when no reclass_value is given)
-  # This is not fatal, but inform user...
-  if (isFALSE(reclass_value)) {
-    if (any(is.na(data[[new_val]]))) {
-      num <- sum(is.na(data[[new_val]]))
-      if (!quiet) message(paste0("Info: NA values are present among the new",
-                                 " values (column '", new_val, "', ", num,
-                                 " NA values). Not a problem, but these may",
-                                 " result in NA pixels in the output raster.")
-    }
-  }
-
   # Check if reclass_value is an numeric or integer value
   if (!isFALSE(reclass_value)) {
     if (!(is.numeric(reclass_value) || is.integer(reclass_value))) {
