@@ -98,8 +98,8 @@
 #'                                raster_layer = stream_raster,
 #'                                recl_layer = recl_raster)
 
-reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
-                           recl_layer, reclass_value = FALSE, all_others = NULL,
+reclass_raster <- function(data, rast_val, new_val = NULL, raster_layer,
+                           recl_layer, reclass_value = NULL, all_others = NULL,
                            no_data = -9999, type = "Int32",
                            compression = "low", bigtiff = TRUE,
                            read = FALSE, quiet = TRUE,
@@ -146,19 +146,18 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   ### or by a column in the table:
 
   # Check if new_val column name exists (when no reclass_value is given)
-  if (isFALSE(new_val) && isFALSE(reclass_value))
-    stop(paste0("new_val: Column name '", new_val,
-                "' does not exist."))
+  if (is.null(new_val) && is.null(reclass_value))
+    stop(paste0("new_val: Column name '", new_val, "' does not exist."))
 
   # Check if values of the new_val column are numeric (when no reclass_value is given)
-  if (isFALSE(reclass_value)) {
+  if (is.null(reclass_value)) {
     if (!is.integer(data[[new_val]])) {
       stop(paste0("new_val:", new_val, ": Column must contain integers."))
     }
   }
 
   # Check if reclass_value is an numeric or integer value
-  if (!isFALSE(reclass_value)) {
+  if (!is.null(reclass_value)) {
     if (!(is.numeric(reclass_value) || is.integer(reclass_value))) {
       stop(paste0("reclass_value:", reclass_value, " must be integers."))
     }
@@ -352,7 +351,7 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # present in the reclass rules) to 99. The line would be ignored.
   #
 
-  if (isFALSE(reclass_value)) {
+  if (is.null(reclass_value)) {
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
                                     new = data[[new_val]])
@@ -363,6 +362,9 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
                                     new = data[["reclass"]])
+    # Improvement: If all non-NA pixels are listed in data[[rast_val]],
+    # we could just make ONE rule "* = reclass_value" here, instead of
+    # many rules setting one pixel value to the same reclass value...
 
   }
 
