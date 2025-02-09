@@ -7,53 +7,65 @@
 reclass_raster(
   data,
   rast_val,
-  new_val = FALSE,
+  new_val = NULL,
   raster_layer,
   recl_layer,
-  reclass_value = FALSE,
+  reclass_value = NULL,
+  all_others = NULL,
   no_data = -9999,
   type = "Int32",
   compression = "low",
   bigtiff = TRUE,
   read = FALSE,
-  quiet = TRUE
+  quiet = TRUE,
+  keep_reclass_rules = FALSE
 )
 }
 \arguments{
-\item{data}{a data.frame or data.table with the original and new values to be
-written to the raster.}
+\item{data}{data.frame or data.table. Input table with the original and new
+values used to reclassify the raster.}
 
-\item{rast_val}{character. The name of the column with the original raster
-values.}
+\item{rast_val}{character. The name of the column in the input table
+containing the original raster values.}
 
-\item{new_val}{character. The name of the column with the new raster values,
-which need to be integer values. In case of floating point values, consider
-multiplying the values e.g. by 1000 to keep three decimals.}
+\item{new_val}{character. The name of the column in the input table
+containing the new raster values, which need to be integer values.
+In case of floating point values, consider multiplying the values e.g.
+by 1000 to keep three decimals.}
 
-\item{raster_layer}{Full path to the input raster .tif layer.}
+\item{raster_layer}{Full path to the input raster layer (.tif file).}
 
-\item{reclass_value}{integer. Value to reclassify the entire raster.
-Default is FALSE. Note in case reclass_value is provided, new_val parameter
-needs to be empty, otherwise the raster is reclassified based on the new_val column.}
+\item{recl_layer}{character. Full path of the output raster layer
+(.tif file), i.e., the reclassified raster file.}
 
-\item{recl_layer}{character. Full path of the output .tif layer, i.e., the
-reclassified raster file.}
+\item{reclass_value}{integer. Value to be assigned to all pixels of the
+raster whose values are listed in the input table (column rast_val). (Pixels
+whose value is not listed in the input table will be assigned NA).
+If reclass_value is given, the column new_val of the input table is ignored.
+Default is FALSE, i.e. the column new_val of the input table will be used.}
+
+\item{all_others}{integer. Value to be assigned all pixels of the raster
+that are not explicitly listed in the input table (and that are not NA in
+the input raster). Defaults to NULL (then all those pixels with get NA
+values). Can be combined with 'new_val' and with 'reclass_value'.}
 
 \item{no_data}{numeric. The no_data value of the new .tif layer.
 Default is -9999.}
 
-\item{type}{character. Data type; Options are Byte, Int16, UInt16, Int32,
-UInt32,CInt16, CInt32. Default is Int32. Note that only integer values are
-allowed.}
+\item{type}{character. Data type (needed by GRASS r.out.gdal, so check the
+GRASS documentation). Options are Byte, Int16, UInt16, Int32, UInt32,
+CInt16, CInt32. Default is Int32. Note that only integer types are allowed.}
 
-\item{compression}{character. Compression of the written output file.
-Compression levels can be defined as "none", "low", or "high". Default is
-"low", referring to compression type "DEFLATE" and compression level 2.
-"high" refers to compression level 9.}
+\item{compression}{character. Compression of the written output file (needed
+by GRASS r.out.gdal, so check the GRASS documentation. Compression levels
+can be defined as "none", "low", or "high". Default is "low", referring to
+compression type "DEFLATE" and compression level 2. "high" refers to
+compression level 9.}
 
 \item{bigtiff}{logical. Define whether the output file is expected to be a
-BIGTIFF (file size larger than 4 GB). If FALSE and size > 4GB no file will be
-written. Default is TRUE.}
+BIGTIFF (file size larger than 4 GB). If FALSE and size > 4GB no file will
+be written. (Needed by GRASS r.out.gdal, so check the GRASS documentation.
+Default is TRUE.}
 
 \item{read}{logical. If TRUE, then the reclassified raster .tif layer
 gets read into R as a SpatRaster (terra object).
@@ -61,6 +73,9 @@ If FALSE, the layer is only stored on disk. Default is FALSE.}
 
 \item{quiet}{logical. If FALSE, the standard output will be printed.
 Default is TRUE.}
+
+\item{keep_reclass_rules}{logical. If TRUE, the reclass rules txt file is
+not deleted. Useful for finding errors. Defaults to FALSE.}
 }
 \description{
 Reclassifies a raster .tif layer based on a look-up table, such
@@ -110,5 +125,5 @@ str_ord_rast <- reclass_raster(data = str_ord$stream,
 https://grass.osgeo.org/grass82/manuals/r.reclass.html
 }
 \author{
-Marlene Schürz, Thomas Tomiczek
+Marlene Schürz, Thomas Tomiczek, Merret Buurman
 }
