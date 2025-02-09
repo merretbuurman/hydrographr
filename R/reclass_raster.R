@@ -48,6 +48,8 @@
 #'  If FALSE, the layer is only stored on disk. Default is FALSE.
 #' @param quiet logical. If FALSE, the standard output will be printed.
 #'  Default is TRUE.
+#' @param keep_reclass_rules logical. If TRUE, the reclass rules txt file is
+#'  not deleted. Useful for finding errors. Defaults to FALSE.
 #'
 #' @importFrom stringi stri_rand_strings
 #' @importFrom data.table data.table fwrite
@@ -100,7 +102,8 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
                            recl_layer, reclass_value = FALSE, all_others = NULL,
                            no_data = -9999, type = "Int32",
                            compression = "low", bigtiff = TRUE,
-                           read = FALSE, quiet = TRUE) {
+                           read = FALSE, quiet = TRUE,
+                           keep_reclass_rules = FALSE) {
 
   # Check operating system
   sys_os <- get_os()
@@ -418,7 +421,11 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   }
 
   # Delete temporary reclass_rules txt file
-  file.remove(rules_path)
+  if (keep_reclass_rules){
+    message("Rules txt file: ", rules_path)
+  } else {
+    file.remove(rules_path)
+  }
 
   # Load output into R session
   if (read == TRUE) {
