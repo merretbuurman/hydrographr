@@ -17,6 +17,10 @@
 #'  containing the new raster values, which need to be integer values.
 #'  In case of floating point values, consider multiplying the values e.g.
 #'  by 1000 to keep three decimals.
+#' @param all_others integer. Value to be assigned all pixels of the raster
+#'  that are not explicitly listed in the input table (and that are not NA in
+#'  the input raster). Defaults to NULL (then all those pixels with get NA
+#'  values). Can be combined with 'new_val' and with 'reclass_value'.
 #' @param reclass_value integer. Value to be assigned to all pixels of the
 #'  raster whose values are listed in the input table (column rast_val). (Pixels
 #'  whose value is not listed in the input table will be assigned NA).
@@ -93,7 +97,7 @@
 #'                                recl_layer = recl_raster)
 
 reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
-                           recl_layer, reclass_value = FALSE,
+                           recl_layer, reclass_value = FALSE, all_others = NULL,
                            no_data = -9999, type = "Int32",
                            compression = "low", bigtiff = TRUE,
                            read = FALSE, quiet = TRUE) {
@@ -344,10 +348,7 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
   # non-classified values (which have a value in old raster that is not
   # present in the reclass rules) to 99. The line would be ignored.
   #
-  # If we add a line
-  # * = 88
-  # then this will classify all leftover pixels that had a values in the
-  # old raster (not NA!), but are not in the reclass rules, to 88.
+
   if (isFALSE(reclass_value)) {
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
@@ -359,6 +360,16 @@ reclass_raster <- function(data, rast_val, new_val = FALSE, raster_layer,
     rules <- data.table::data.table(old = data[[rast_val]],
                                     equal = "=",
                                     new = data[["reclass"]])
+
+  }
+
+  ## Reclassifying all remaining pixels (which are not NA):
+  # If we add a line
+  # * = 88
+  # then this will classify all leftover pixels that had a values in the
+  # old raster (not NA!), but are not in the reclass rules, to 88.
+  if (!is.null(all_others)) {
+    rules <- rbind(rules, list("*", "=", all_others))
   }
 
   # Write reclass rules to temp txt file in temp dir, for GRASS to use.
