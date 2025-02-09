@@ -4,3 +4,4 @@
 ^docs$
 ^pkgdown$
 .nojekyll
+^tests/test_rasters$
